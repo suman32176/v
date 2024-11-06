@@ -16,15 +16,28 @@ def search_videos(query_string, orientation_landscape=True):
         "per_page": 15
     }
 
-    response = requests.get(url, headers=headers, params=params)
-    json_data = response.json()
-    log_response(LOG_TYPE_PEXEL, query_string, response.json())
-   
-    return json_data
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        json_data = response.json()
+        log_response(LOG_TYPE_PEXEL, query_string, json_data)
+        return json_data
+    except requests.RequestException as e:
+        print(f"Error in API request: {str(e)}")
+        return None
 
 def getBestVideo(query_string, orientation_landscape=True, used_vids=[]):
     vids = search_videos(query_string, orientation_landscape)
+    
+    if vids is None or 'videos' not in vids:
+        print(f"No valid response for query: {query_string}")
+        return None
+
     videos = vids['videos']
+
+    if not videos:
+        print(f"No videos found for query: {query_string}")
+        return None
 
     if orientation_landscape:
         filtered_videos = [video for video in videos if video['width'] >= 1920 and video['height'] >= 1080 and video['width']/video['height'] == 16/9]
@@ -43,7 +56,8 @@ def getBestVideo(query_string, orientation_landscape=True, used_vids=[]):
                 if video_file['width'] == 1080 and video_file['height'] == 1920:
                     if not (video_file['link'].split('.hd')[0] in used_vids):
                         return video_file['link']
-    print("NO LINKS found for this round of search with query :", query_string)
+
+    print(f"NO LINKS found for this round of search with query: {query_string}")
     return None
 
 def generate_video_url(timed_video_searches, video_server):
@@ -51,7 +65,7 @@ def generate_video_url(timed_video_searches, video_server):
     if video_server == "pexel":
         used_links = []
         for (t1, t2), search_terms in timed_video_searches:
-            url = ""
+            url = None
             for query in search_terms:
                 url = getBestVideo(query, orientation_landscape=True, used_vids=used_links)
                 if url:
