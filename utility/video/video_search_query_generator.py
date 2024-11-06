@@ -42,12 +42,6 @@ Output the result as a Python list of lists, where each inner list contains a ti
 [[0, 5], ["keyword1", "keyword2", "keyword3"]], [[5, 10], ["keyword4", "keyword5", "keyword6"]], ...
 """
 
-def fix_json(json_str):
-    json_str = json_str.replace("'", '"')
-    json_str = json_str.replace(""", '"').replace(""", '"').replace("'", '"').replace("'", '"')
-    json_str = json_str.replace('"you didn"t"', '"you didn\'t"')
-    return json_str
-
 def getVideoSearchQueriesTimed(script, captions_timed):
     try:
         content = call_OpenAI(script, captions_timed)
