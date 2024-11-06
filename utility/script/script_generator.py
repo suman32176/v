@@ -44,33 +44,18 @@ def generate_script(topic, video_type='short'):
         )
     else:  # Long video script generation
         prompt = (
-           """Provide in-depth factual information on the topic, listed in bullet or numbered format. 
-            Your facts longs are concise, each lasting less than 36000 seconds (approximately 1400 words). 
-            Avoid introductions, summaries, or transitions, focusing only on concise, detailed facts in list form.
+          """Provide detailed factual statements on the topic in JSON list format, each fact concise and with no introductions or summaries.
 
-            For instance, if the user asks for:
-            Weird facts
-            You would produce content like this:
-
-            Weird facts you don't know:
-            - Bananas are berries, but strawberries aren't.
-            - A single cloud can weigh over a million pounds.
-            - There's a species of jellyfish that is biologically immortal.
-            - Honey never spoils; archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still edible.
-            - The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.
-            - Octopuses have three hearts and blue blood.
-
-            You are now tasked with creating the best short script based on the user's requested type of 'facts'.
-
-            Keep it brief, highly interesting, and unique.
-
-            Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
-
+            Example for 'Weird facts':
+            {"script": [
+                "Bananas are berries, but strawberries aren't.",
+                "A single cloud can weigh over a million pounds.",
+                "Honey never spoils; archaeologists have found edible pots of honey in ancient Egyptian tombs."
+            ]}
+            """
           
             
-            # Output
-             {"script": "Here is the script ..."}
-            """
+          
         )
 
     response = client.chat.completions.create(
