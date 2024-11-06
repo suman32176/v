@@ -36,7 +36,7 @@ def generate_script(topic, video_type='short'):
 
             Keep it brief, highly interesting, and unique.
 
-            Stictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
+            Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
 
             # Output
             {"script": "Here is the script ..."}
@@ -64,7 +64,15 @@ def generate_script(topic, video_type='short'):
     )
     script = response.choices[0].message.content.strip()
     
-    return script
+    if video_type == 'short':
+        try:
+            script_json = json.loads(script)
+            return script_json['script']
+        except json.JSONDecodeError:
+            print("Error decoding JSON. Returning raw script.")
+            return script
+    else:
+        return script
 
 def split_script(script, words_per_segment=140):
     words = script.split()
