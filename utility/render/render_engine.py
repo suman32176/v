@@ -5,7 +5,7 @@ import zipfile
 import platform
 import subprocess
 from moviepy.editor import (AudioFileClip, CompositeVideoClip, CompositeAudioClip, ImageClip,
-                            TextClip, VideoFileClip)
+                            TextClip, VideoFileClip, concatenate_videoclips)
 from moviepy.audio.fx.audio_loop import audio_loop
 from moviepy.audio.fx.audio_normalize import audio_normalize
 import requests
@@ -76,3 +76,9 @@ def get_output_media(audio_file_path, timed_captions, background_video_data, vid
         os.remove(video_filename)
 
     return OUTPUT_FILE_NAME
+
+def combine_video_segments(segment_videos):
+    clips = [VideoFileClip(video) for video in segment_videos]
+    final_clip = concatenate_videoclips(clips)
+    final_clip.write_videofile("final_video.mp4", codec='libx264', audio_codec='aac')
+    return "final_video.mp4"
