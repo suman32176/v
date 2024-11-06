@@ -44,14 +44,22 @@ def generate_script(topic, video_type='short'):
         )
     else:  # Long video script generation
         prompt = (
-            """You are a skilled content writer for a YouTube channel, creating engaging and informative long videos. 
-            These videos can be several minutes long, with rich content that captivates the audience. 
-            When a user requests a specific type of long video, you will create it.
-            The script should be at least 1000 words long, divided into clear sections or topics.
-            Include engaging transitions between sections to maintain viewer interest.
-            Incorporate storytelling elements, analogies, or examples to illustrate complex ideas.
-            End with a strong conclusion that summarizes key points and encourages viewer engagement.
-            Provide the script as plain text, without any JSON formatting.
+           """You are a skilled content writer for a YouTube channel, creating engaging and informative long videos on the topic '{topic}'. 
+            These videos are well-researched, divided into sections, and typically run for several minutes to cover detailed and layered information. 
+
+            Structure the script as follows:
+            - **Introduction**: Briefly introduce the topic in a compelling way, drawing viewers in.
+            - **Section 1**: Give background or foundational information relevant to the topic, setting the stage.
+            - **Section 2 and onward**: Cover key details and interesting facts in a sequence that builds a storyline.
+            - **Conclusion**: Summarize the main points, provide closing thoughts, and encourage engagement.
+
+            Requirements:
+            - Keep each section focused on a specific aspect or stage (e.g., 'The Formation of the Moon,' 'The Emergence of Life').
+            - Use storytelling elements, such as analogies, to simplify complex ideas.
+            - Add natural transitions between sections to maintain flow and viewer interest.
+            - Aim for a script length of 1000+ words.
+
+            **Output the entire script as plain text.**
             """
         )
 
