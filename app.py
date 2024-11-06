@@ -1,15 +1,13 @@
 import os
 import json
-import edge_tts
 import asyncio
-import whisper_timestamped as whisper
+import argparse
 from utility.script.script_generator import generate_script, split_script
 from utility.audio.audio_generator import generate_audio
 from utility.captions.timed_captions_generator import generate_timed_captions
 from utility.video.background_video_generator import generate_video_url
 from utility.render.render_engine import get_output_media, combine_video_segments
 from utility.video.video_search_query_generator import getVideoSearchQueriesTimed, merge_empty_intervals
-import argparse
 
 async def process_segment(segment, segment_index):
     print(f"Processing segment {segment_index}...")
@@ -46,7 +44,7 @@ async def main(topic, video_type):
         script = generate_script(topic, video_type)
         print("Generated script:", script)
 
-        segments = split_script(script)
+        segments = split_script(script, words_per_segment=300 if video_type == 'long' else 140)
         print(f"Script split into {len(segments)} segments")
 
         segment_videos = []
