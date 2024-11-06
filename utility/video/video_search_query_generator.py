@@ -20,7 +20,7 @@ log_directory = ".logs/gpt_logs"
 
 prompt = """# Instructions
 
-Given the following video script and timed captions, extract three visually concrete and specific keywords for each time segment that can be used to search for background videos. The keywords should be short and capture the main essence of the sentence. They can be synonyms or related terms. If a caption is vague or general, consider the next timed caption for more context. If a keyword is a single word, try to return a two-word keyword that is visually concrete. If a time frame contains two or more important pieces of information, divide it into shorter time frames with one keyword each. Ensure that the time periods are strictly consecutive and cover the entire length of the video. Each keyword should cover between 2-4 seconds. The output should be in JSON format, like this: [[[t1, t2], ["keyword1", "keyword2", "keyword3"]], [[t2, t3], ["keyword4", "keyword5", "keyword6"]], ...]. Please handle all edge cases, such as overlapping time segments, vague or general captions, and single-word keywords.
+Given the following video script and timed captions, extract three visually concrete and specific keywords for each time segment that can be used to search for background videos. The keywords should be short and capture the main essence of the sentence. They can be synonyms or related terms. If a caption is vague or general, consider the next timed caption for more context. If a keyword is a single word, try to return a two-word keyword that is visually concrete. If a time frame contains two or more important pieces of information, divide it into shorter time frames with one keyword each. Ensure that the time periods are strictly consecutive and cover the entire length of the video. Each keyword should cover between 2-4 seconds.
 
 For example, if the caption is 'The cheetah is the fastest land animal, capable of running at speeds up to 75 mph', the keywords should include 'cheetah running', 'fastest animal', and '75 mph'. Similarly, for 'The Great Wall of China is one of the most iconic landmarks in the world', the keywords should be 'Great Wall of China', 'iconic landmark', and 'China landmark'.
 
@@ -37,38 +37,42 @@ The list must always contain the most relevant and appropriate query searches.
 ['Un chien', 'une voiture rapide', 'une maison rouge'] <= BAD, because the text query is NOT in English.
 
 Note: Your response should be the response only and no extra text or data.
+
+Output the result as a Python list of lists, where each inner list contains a time range and a list of keywords. For example:
+[[0, 5], ["keyword1", "keyword2", "keyword3"]], [[5, 10], ["keyword4", "keyword5", "keyword6"]], ...
 """
 
 def fix_json(json_str):
-    json_str = json_str.replace("'", "'")
-    json_str = json_str.replace(""", "\"").replace(""", "\"").replace("'", "\"").replace("'", "\"")
+    json_str = json_str.replace("'", '"')
+    json_str = json_str.replace(""", '"').replace(""", '"').replace("'", '"').replace("'", '"')
     json_str = json_str.replace('"you didn"t"', '"you didn\'t"')
     return json_str
 
 def getVideoSearchQueriesTimed(script, captions_timed):
-    end = captions_timed[-1][0][1]
     try:
-        out = [[[0,0],""]]
-        while out[-1][0][1] != end:
-            content = call_OpenAI(script, captions_timed).replace("'",'"')
-            try:
-                out = json.loads(content)
-            except Exception as e:
-                print("content: \n", content, "\n\n")
-                print(e)
-                content = fix_json(content.replace("```json", "").replace("```", ""))
-                out = json.loads(content)
+        content = call_OpenAI(script, captions_timed)
+        print("Content", content)
+        
+        # Remove any leading/trailing whitespace and non-list characters
+        content = content.strip()
+        content = re.sub(r'^[^\[]+', '', content)
+        content = re.sub(r'[^\]]+$', '', content)
+        
+        # Evaluate the string as a Python expression
+        out = eval(content)
+        
+        if not isinstance(out, list) or not all(isinstance(item, list) and len(item) == 2 for item in out):
+            raise ValueError("Invalid format in API response")
+        
         return out
     except Exception as e:
-        print("error in response", e)
-   
-    return None
+        print("Error in response", str(e))
+        return None
 
 def call_OpenAI(script, captions_timed):
-    user_content = """Script: {}
-Timed Captions:{}
-""".format(script, "".join(map(str, captions_timed)))
-    print("Content", user_content)
+    user_content = f"""Script: {script}
+Timed Captions: {captions_timed}"""
+    print("User Content", user_content)
     
     response = client.chat.completions.create(
         model=model,
