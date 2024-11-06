@@ -18,7 +18,7 @@ def search_videos(query_string, orientation_landscape=True):
 
     try:
         response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        response.raise_for_status()
         json_data = response.json()
         log_response(LOG_TYPE_PEXEL, query_string, json_data)
         return json_data
