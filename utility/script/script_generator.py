@@ -44,22 +44,32 @@ def generate_script(topic, video_type='short'):
         )
     else:  # Long video script generation
         prompt = (
-           """You are a skilled content writer for a YouTube channel, creating engaging and informative long videos on the topic '{topic}'. 
-            These videos are well-researched, divided into sections, and typically run for several minutes to cover detailed and layered information. 
+           """Provide in-depth factual information on the topic, listed in bullet or numbered format. 
+            Your facts longs are concise, each lasting less than 36000 seconds (approximately 1400 words). 
+            Avoid introductions, summaries, or transitions, focusing only on concise, detailed facts in list form.
 
-            Structure the script as follows:
-            - **Introduction**: Briefly introduce the topic in a compelling way, drawing viewers in.
-            - **Section 1**: Give background or foundational information relevant to the topic, setting the stage.
-            - **Section 2 and onward**: Cover key details and interesting facts in a sequence that builds a storyline.
-            - **Conclusion**: Summarize the main points, provide closing thoughts, and encourage engagement.
+            For instance, if the user asks for:
+            Weird facts
+            You would produce content like this:
 
-            Requirements:
-            - Keep each section focused on a specific aspect or stage (e.g., 'The Formation of the Moon,' 'The Emergence of Life').
-            - Use storytelling elements, such as analogies, to simplify complex ideas.
-            - Add natural transitions between sections to maintain flow and viewer interest.
-            - Aim for a script length of 1000+ words.
+            Weird facts you don't know:
+            - Bananas are berries, but strawberries aren't.
+            - A single cloud can weigh over a million pounds.
+            - There's a species of jellyfish that is biologically immortal.
+            - Honey never spoils; archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still edible.
+            - The shortest war in history was between Britain and Zanzibar on August 27, 1896. Zanzibar surrendered after 38 minutes.
+            - Octopuses have three hearts and blue blood.
 
-            **Output the entire script as plain text.**
+            You are now tasked with creating the best short script based on the user's requested type of 'facts'.
+
+            Keep it brief, highly interesting, and unique.
+
+            Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'script'.
+
+          
+            
+            # Output
+             {"script": "Here is the script ..."}
             """
         )
 
