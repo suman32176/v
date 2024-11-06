@@ -1,16 +1,6 @@
 import os
-import json
-import edge_tts
-import asyncio
-import whisper_timestamped as whisper
-from utility.audio.audio_generator import generate_audio
-from utility.captions.timed_captions_generator import generate_timed_captions
-from utility.video.background_video_generator import generate_video_url
-from utility.render.render_engine import get_output_media
-from utility.video.video_search_query_generator import getVideoSearchQueriesTimed, merge_empty_intervals
-import argparse
-import os
 from openai import OpenAI
+import json
 
 if len(os.environ.get("GROQ_API_KEY", "")) > 30:
     from groq import Groq
@@ -29,7 +19,7 @@ def generate_script(topic, video_type='short'):
             """You are a seasoned content writer for a YouTube Shorts channel, specializing in facts videos. 
             Your facts shorts are concise, each lasting less than 50 seconds (approximately 140 words). 
             They are incredibly engaging and original. When a user requests a specific type of facts short, you will create it.
-            ... (rest of the prompt remains the same) ...
+            Provide the script as plain text, without any JSON formatting.
             """
         )
     else:  # Long video script generation
@@ -41,6 +31,7 @@ def generate_script(topic, video_type='short'):
             Include engaging transitions between sections to maintain viewer interest.
             Incorporate storytelling elements, analogies, or examples to illustrate complex ideas.
             End with a strong conclusion that summarizes key points and encourages viewer engagement.
+            Provide the script as plain text, without any JSON formatting.
             """
         )
 
@@ -48,18 +39,11 @@ def generate_script(topic, video_type='short'):
         model=model,
         messages=[
             {"role": "system", "content": prompt},
-            {"role": "user", "content": topic}
+            {"role": "user", "content": f"Create a {video_type} video script about {topic}"}
         ]
     )
-    content = response.choices[0].message.content
-    try:
-        script = json.loads(content)["script"]
-    except Exception as e:
-        # Fallback if JSON parsing fails
-        json_start_index = content.find('{')
-        json_end_index = content.rfind('}')
-        content = content[json_start_index:json_end_index + 1]
-        script = json.loads(content)["script"]
+    script = response.choices[0].message.content.strip()
+    
     return script
 
 def split_script(script, words_per_segment=140):
