@@ -3,16 +3,16 @@ import os
 import json
 import re
 from datetime import datetime
-from utility.utils import log_response,LOG_TYPE_GPT
+from utility.utils import log_response, LOG_TYPE_GPT
 
-if len(os.environ.get("GROQ_API_KEY")) > 30:
+if len(os.environ.get("GROQ_API_KEY", "")) > 30:
     from groq import Groq
     model = "llama3-70b-8192"
     client = Groq(
         api_key=os.environ.get("GROQ_API_KEY"),
-        )
+    )
 else:
-    model = "gpt-4o"
+    model = "gpt-4"
     OPENAI_API_KEY = os.environ.get('OPENAI_KEY')
     client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -37,24 +37,20 @@ The list must always contain the most relevant and appropriate query searches.
 ['Un chien', 'une voiture rapide', 'une maison rouge'] <= BAD, because the text query is NOT in English.
 
 Note: Your response should be the response only and no extra text or data.
-  """
+"""
 
 def fix_json(json_str):
-    # Replace typographical apostrophes with straight quotes
-    json_str = json_str.replace("’", "'")
-    # Replace any incorrect quotes (e.g., mixed single and double quotes)
-    json_str = json_str.replace("“", "\"").replace("”", "\"").replace("‘", "\"").replace("’", "\"")
-    # Add escaping for quotes within the strings
+    json_str = json_str.replace("'", "'")
+    json_str = json_str.replace(""", "\"").replace(""", "\"").replace("'", "\"").replace("'", "\"")
     json_str = json_str.replace('"you didn"t"', '"you didn\'t"')
     return json_str
 
-def getVideoSearchQueriesTimed(script,captions_timed):
+def getVideoSearchQueriesTimed(script, captions_timed):
     end = captions_timed[-1][0][1]
     try:
-        
         out = [[[0,0],""]]
         while out[-1][0][1] != end:
-            content = call_OpenAI(script,captions_timed).replace("'",'"')
+            content = call_OpenAI(script, captions_timed).replace("'",'"')
             try:
                 out = json.loads(content)
             except Exception as e:
@@ -64,18 +60,18 @@ def getVideoSearchQueriesTimed(script,captions_timed):
                 out = json.loads(content)
         return out
     except Exception as e:
-        print("error in response",e)
+        print("error in response", e)
    
     return None
 
-def call_OpenAI(script,captions_timed):
+def call_OpenAI(script, captions_timed):
     user_content = """Script: {}
 Timed Captions:{}
-""".format(script,"".join(map(str,captions_timed)))
+""".format(script, "".join(map(str, captions_timed)))
     print("Content", user_content)
     
     response = client.chat.completions.create(
-        model= model,
+        model=model,
         temperature=1,
         messages=[
             {"role": "system", "content": prompt},
@@ -86,7 +82,7 @@ Timed Captions:{}
     text = response.choices[0].message.content.strip()
     text = re.sub('\s+', ' ', text)
     print("Text", text)
-    log_response(LOG_TYPE_GPT,script,text)
+    log_response(LOG_TYPE_GPT, script, text)
     return text
 
 def merge_empty_intervals(segments):
@@ -95,12 +91,10 @@ def merge_empty_intervals(segments):
     while i < len(segments):
         interval, url = segments[i]
         if url is None:
-            # Find consecutive None intervals
             j = i + 1
             while j < len(segments) and segments[j][1] is None:
                 j += 1
             
-            # Merge consecutive None intervals with the previous valid URL
             if i > 0:
                 prev_interval, prev_url = merged[-1]
                 if prev_url is not None and prev_interval[1] == interval[0]:
