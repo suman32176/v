@@ -11,7 +11,7 @@ DIRECTORY_LOG_GPT = ".logs/gpt_logs"
 DIRECTORY_LOG_PEXEL = ".logs/pexel_logs"
 
 # method to log response from pexel and openai
-def log_response(log_type, query, response):
+def log_response(log_type, query,response):
     log_entry = {
         "query": query,
         "response": response,
@@ -23,7 +23,7 @@ def log_response(log_type, query, response):
         filename = '{}_gpt3.txt'.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
         filepath = os.path.join(DIRECTORY_LOG_GPT, filename)
         with open(filepath, "w") as outfile:
-            json.dump(log_entry, outfile, indent=2)
+            outfile.write(json.dumps(log_entry) + '\n')
 
     if log_type == LOG_TYPE_PEXEL:
         if not os.path.exists(DIRECTORY_LOG_PEXEL):
@@ -31,4 +31,4 @@ def log_response(log_type, query, response):
         filename = '{}_pexel.txt'.format(datetime.now().strftime("%Y%m%d_%H%M%S"))
         filepath = os.path.join(DIRECTORY_LOG_PEXEL, filename)
         with open(filepath, "w") as outfile:
-            json.dump(log_entry, outfile, indent=2)
+            outfile.write(json.dumps(log_entry) + '\n')
