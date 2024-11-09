@@ -1,11 +1,14 @@
 import os 
 import requests
-from utility.utils import log_response,LOG_TYPE_PEXEL
+from utility.utils import log_response, LOG_TYPE_PEXEL
+import logging
+import time
 
 PEXELS_API_KEY = os.environ.get('PEXELS_KEY')
+MAX_RETRIES = 3
+RETRY_DELAY = 2
 
-def search_videos(query_string, orientation_landscape=True):
-   
+def search_videos(query_string, orientation_landscape=True, page=1):
     url = "https://api.pexels.com/videos/search"
     headers = {
         "Authorization": PEXELS_API_KEY,
@@ -14,30 +17,45 @@ def search_videos(query_string, orientation_landscape=True):
     params = {
         "query": query_string,
         "orientation": "landscape" if orientation_landscape else "portrait",
-        "per_page": 15
+        "per_page": 15,
+        "page": page
     }
 
-    response = requests.get(url, headers=headers, params=params)
-    json_data = response.json()
-    log_response(LOG_TYPE_PEXEL,query_string,response.json())
-   
-    return json_data
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            json_data = response.json()
+            log_response(LOG_TYPE_PEXEL, query_string, json_data)
+            return json_data
+        except requests.RequestException as e:
+            logging.error(f"Error in API request (attempt {attempt + 1}/{MAX_RETRIES}): {str(e)}")
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(RETRY_DELAY)
+            else:
+                logging.error("Max retries reached. Giving up.")
+                return None
 
+def getBestVideo(query_string, orientation_landscape=True, used_vids=[], page=1):
+    vids = search_videos(query_string, orientation_landscape, page)
+    
+    if vids is None or 'videos' not in vids:
+        logging.warning(f"No valid response for query: {query_string}")
+        return None
 
-def getBestVideo(query_string, orientation_landscape=True, used_vids=[]):
-    vids = search_videos(query_string, orientation_landscape)
-    videos = vids['videos']  # Extract the videos list from JSON
+    videos = vids['videos']
 
-    # Filter and extract videos with width and height as 1920x1080 for landscape or 1080x1920 for portrait
+    if not videos:
+        logging.warning(f"No videos found for query: {query_string}")
+        return None
+
     if orientation_landscape:
         filtered_videos = [video for video in videos if video['width'] >= 1920 and video['height'] >= 1080 and video['width']/video['height'] == 16/9]
     else:
         filtered_videos = [video for video in videos if video['width'] >= 1080 and video['height'] >= 1920 and video['height']/video['width'] == 16/9]
 
-    # Sort the filtered videos by duration in ascending order
     sorted_videos = sorted(filtered_videos, key=lambda x: abs(15-int(x['duration'])))
 
-    # Extract the top 3 videos' URLs
     for video in sorted_videos:
         for video_file in video['video_files']:
             if orientation_landscape:
@@ -48,24 +66,28 @@ def getBestVideo(query_string, orientation_landscape=True, used_vids=[]):
                 if video_file['width'] == 1080 and video_file['height'] == 1920:
                     if not (video_file['link'].split('.hd')[0] in used_vids):
                         return video_file['link']
-    print("NO LINKS found for this round of search with query :", query_string)
+
+    logging.warning(f"No suitable videos found for query: {query_string}")
     return None
 
-
-def generate_video_url(timed_video_searches,video_server):
-        timed_video_urls = []
-        if video_server == "pexel":
-            used_links = []
-            for (t1, t2), search_terms in timed_video_searches:
-                url = ""
+def generate_video_url(timed_video_searches, video_server):
+    timed_video_urls = []
+    if video_server == "pexel":
+        used_links = []
+        for (t1, t2), search_terms in timed_video_searches:
+            url = None
+            for page in range(1, 4):  # Try up to 3 pages
                 for query in search_terms:
-                  
-                    url = getBestVideo(query, orientation_landscape=True, used_vids=used_links)
+                    url = getBestVideo(query, orientation_landscape=True, used_vids=used_links, page=page)
                     if url:
                         used_links.append(url.split('.hd')[0])
                         break
-                timed_video_urls.append([[t1, t2], url])
-        elif video_server == "stable_diffusion":
-            timed_video_urls = get_images_for_video(timed_video_searches)
+                if url:
+                    break
+            timed_video_urls.append([[t1, t2], url])
+    elif video_server == "stable_diffusion":
+        timed_video_urls = get_images_for_video(timed_video_searches)
+    else:
+        logging.error(f"Unsupported video server: {video_server}")
 
-        return timed_video_urls
+    return timed_video_urls
